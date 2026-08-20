@@ -1,34 +1,34 @@
 <!DOCTYPE html>
-  <html lang="pt-BR">
-  <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bipagem Flex / Entrega Direta — Bônus por Venda</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-  <style>
-    :root{
-      --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --border:#2a2f3a;
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bipagem Flex / Entrega Direta — Bônus por Venda</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --border:#2a2f3a;
     --text:#eef0f4; --muted:#98a2b3; --accent:#5b8def; --accent2:#7aa2f7;
-          --good:#22c55e; --good-bg:#0f2a1c; --bad:#ef4444; --bad-bg:#2a1414;
-          --radius:14px;
-}
+    --good:#22c55e; --good-bg:#0f2a1c; --bad:#ef4444; --bad-bg:#2a1414;
+    --radius:14px;
+  }
   @media (prefers-color-scheme: light){
-        :root{
+    :root{
       --bg:#f5f6f8; --panel:#ffffff; --panel2:#f0f1f4; --border:#e2e5ea;
       --text:#161a22; --muted:#5b6472; --accent:#3364d8; --accent2:#3364d8;
       --good:#158a45; --good-bg:#e8f8ee; --bad:#c0272d; --bad-bg:#fdeaea;
-        }
-        }
+    }
+  }
   *{box-sizing:border-box;}
   body{
-        margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
     background:var(--bg); color:var(--text); padding-bottom:60px;
-}
+  }
   header{
-        padding:18px 16px 14px; border-bottom:1px solid var(--border);
+    padding:18px 16px 14px; border-bottom:1px solid var(--border);
     position:sticky; top:0; background:var(--bg); z-index:20;
-}
+  }
   header h1{ font-size:17px; margin:0 0 2px; font-weight:700; }
   header p{ margin:0; font-size:12.5px; color:var(--muted); }
 
@@ -36,48 +36,48 @@
   .tabbar{ display:flex; gap:8px; max-width:640px; margin:12px auto 0; padding:0 12px; }
   .tab-btn{ flex:1; padding:11px 8px; border-radius:10px; border:1px solid var(--border); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .tab-btn.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
-    #history-table td, #history-table th{ vertical-align:top; }
+  #history-table td, #history-table th{ vertical-align:top; }
 
   .card{
-        background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
     padding:16px; margin-bottom:14px;
   }
   .card h2{ font-size:14px; margin:0 0 10px; font-weight:700; }
   .muted{ color:var(--muted); font-size:12.5px; }
 
   .freshness{
-        display:flex; align-items:center; gap:8px; font-size:12.5px; padding:10px 12px;
+    display:flex; align-items:center; gap:8px; font-size:12.5px; padding:10px 12px;
     border-radius:10px; background:var(--panel2); border:1px solid var(--border); margin-bottom:14px;
-}
+  }
   .freshness .dot{ width:8px; height:8px; border-radius:50%; background:var(--good); flex:none; }
   .freshness.stale .dot{ background:#eab308; }
-    .freshness.none .dot{ background:var(--bad); }
+  .freshness.none .dot{ background:var(--bad); }
 
   details.manual{ margin-top:10px; }
   details.manual summary{ cursor:pointer; font-size:12.5px; color:var(--accent2); }
   .upload-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
   .file-btn{
-        display:inline-flex; align-items:center; gap:8px; background:var(--panel2);
+    display:inline-flex; align-items:center; gap:8px; background:var(--panel2);
     border:1px dashed var(--border); border-radius:10px; padding:10px 14px;
     font-size:13px; cursor:pointer; color:var(--text);
-}
+  }
   .file-btn input{ display:none; }
   .file-status{ font-size:12.5px; margin-top:10px; line-height:1.6; }
   .pill{
-        display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600;
+    display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600;
     padding:3px 9px; border-radius:999px; margin-right:6px;
-}
-      .pill.shopee{ background:#3a190f; color:#ff8a65; }
-        .pill.ml{ background:#3a3a00; color:#ffe600; }
+  }
+  .pill.shopee{ background:#3a190f; color:#ff8a65; }
+  .pill.ml{ background:#3a3a00; color:#ffe600; }
   @media (prefers-color-scheme: light){
     .pill.shopee{ background:#ffe8e0; color:#c53f1d; }
-        .pill.ml{ background:#fff9cc; color:#7a6a00; }
-    }
+    .pill.ml{ background:#fff9cc; color:#7a6a00; }
+  }
 
   /* stats */
   .stats{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px; }
   .stat{
-        background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
     padding:14px; text-align:left;
   }
   .stat .label{ font-size:11.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
@@ -88,28 +88,28 @@
   #camera-wrap{
     position:relative; width:100%; aspect-ratio:1/1; max-height:70vw; background:#000; border-radius:12px;
     overflow:hidden; display:none;
-      }
+  }
   #camera-wrap.active{ display:block; }
   #qr-video{ width:100%; height:100%; object-fit:cover; }
   .scan-box{
-        position:absolute; left:15%; right:15%; top:15%; bottom:15%;
+    position:absolute; left:15%; right:15%; top:15%; bottom:15%;
     border:3px solid var(--accent2); border-radius:16px; box-shadow:0 0 0 999px rgba(0,0,0,.35);
-                }
+  }
 
   .btn{
-        appearance:none; border:none; border-radius:10px; padding:12px 16px; font-size:14px;
+    appearance:none; border:none; border-radius:10px; padding:12px 16px; font-size:14px;
     font-weight:700; cursor:pointer; width:100%;
   }
   .btn-primary{ background:var(--accent); color:#fff; }
-    .btn-secondary{ background:var(--panel2); color:var(--text); border:1px solid var(--border); }
+  .btn-secondary{ background:var(--panel2); color:var(--text); border:1px solid var(--border); }
   .btn-row{ display:flex; gap:8px; margin-top:10px; }
   .btn-row .btn{ width:auto; flex:1; }
 
   .manual-row{ display:flex; gap:8px; margin-top:10px; }
   .manual-row input{
-        flex:1; padding:12px; border-radius:10px; border:1px solid var(--border);
+    flex:1; padding:12px; border-radius:10px; border:1px solid var(--border);
     background:var(--panel2); color:var(--text); font-size:14px;
-}
+  }
 
   /* result flash */
   #result{ margin-top:12px; border-radius:12px; padding:14px; display:none; }
@@ -136,135 +136,135 @@
   footer{ max-width:640px; margin:0 auto; padding:6px 12px 30px; color:var(--muted); font-size:11.5px; line-height:1.6; }
   a{ color:var(--accent2); }
 </style>
-    </head>
-    <body>
+</head>
+<body>
 
-    <header>
-      <h1>📦 Bipagem — Entrega Direta / Flex</h1>
-      <p>Escaneie o QR code da etiqueta ao liberar para a transportadora e veja o bônus na hora.</p>
-    </header>
+<header>
+  <h1>📦 Bipagem — Entrega Direta / Flex</h1>
+  <p>Escaneie o QR code da etiqueta ao liberar para a transportadora e veja o bônus na hora.</p>
+</header>
 
-    <nav class="tabbar">
-      <button class="tab-btn active" id="tab-scan" type="button">📷 Bipagem</button>
-      <button class="tab-btn" id="tab-panel" type="button">📊 Painel</button>
-    </nav>
+<nav class="tabbar">
+  <button class="tab-btn active" id="tab-scan" type="button">📷 Bipagem</button>
+  <button class="tab-btn" id="tab-panel" type="button">📊 Painel</button>
+</nav>
 
-    <main id="view-scan">
+<main id="view-scan">
 
-      <div class="freshness" id="freshness">
-        <span class="dot"></span>
-        <span id="freshness-text">Carregando dados de hoje…</span>
+  <div class="freshness" id="freshness">
+    <span class="dot"></span>
+    <span id="freshness-text">Carregando dados de hoje…</span>
   </div>
 
   <div class="stats">
     <div class="stat">
       <div class="label">Escaneados hoje</div>
-          <div class="value" id="stat-count">0</div>
-          <div class="sub" id="stat-count-sub">de 0 esperados</div>
-        </div>
-        <div class="stat">
-          <div class="label">Bônus acumulado</div>
+      <div class="value" id="stat-count">0</div>
+      <div class="sub" id="stat-count-sub">de 0 esperados</div>
+    </div>
+    <div class="stat">
+      <div class="label">Bônus acumulado</div>
       <div class="value" id="stat-total">R$ 0,00</div>
-          <div class="sub">Shopee + Mercado Livre</div>
-        </div>
-        <div class="stat">
-          <div class="label"><span class="pill shopee">Shopee</span></div>
-          <div class="value" id="stat-shopee">R$ 0,00</div>
-          <div class="sub" id="stat-shopee-sub">0 pedidos</div>
-        </div>
-        <div class="stat">
-          <div class="label"><span class="pill ml">Mercado Livre</span></div>
-          <div class="value" id="stat-ml">R$ 0,00</div>
-          <div class="sub" id="stat-ml-sub">0 pedidos</div>
-        </div>
-      </div>
+      <div class="sub">Shopee + Mercado Livre</div>
+    </div>
+    <div class="stat">
+      <div class="label"><span class="pill shopee">Shopee</span></div>
+      <div class="value" id="stat-shopee">R$ 0,00</div>
+      <div class="sub" id="stat-shopee-sub">0 pedidos</div>
+    </div>
+    <div class="stat">
+      <div class="label"><span class="pill ml">Mercado Livre</span></div>
+      <div class="value" id="stat-ml">R$ 0,00</div>
+      <div class="sub" id="stat-ml-sub">0 pedidos</div>
+    </div>
+  </div>
 
-      <div class="card">
-        <h2>Escanear</h2>
-        <div id="camera-wrap">
-          <video id="qr-video" autoplay playsinline muted></video>
+  <div class="card">
+    <h2>Escanear</h2>
+    <div id="camera-wrap">
+      <video id="qr-video" autoplay playsinline muted></video>
       <div class="scan-box"></div>
     </div>
-        <canvas id="qr-canvas" style="display:none;"></canvas>
-        <div class="btn-row">
-          <button class="btn btn-primary" id="btn-camera">📷 Ativar câmera (QR code)</button>
-          <button class="btn btn-secondary" id="btn-camera-stop" style="display:none;">Parar câmera</button>
+    <canvas id="qr-canvas" style="display:none;"></canvas>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-camera">📷 Ativar câmera (QR code)</button>
+      <button class="btn btn-secondary" id="btn-camera-stop" style="display:none;">Parar câmera</button>
     </div>
     <div class="manual-row">
       <input type="text" id="manual-code" placeholder="Ou digite / use leitor físico + Enter" autocomplete="off">
-          <button class="btn btn-primary" style="width:auto;" id="btn-manual">Conferir</button>
-        </div>
-        <div id="result"></div>
+      <button class="btn btn-primary" style="width:auto;" id="btn-manual">Conferir</button>
+    </div>
+    <div id="result"></div>
 
-        <details class="manual">
-          <summary>Atualizar dados manualmente (caso a atualização automática de hoje não tenha chegado)</summary>
+    <details class="manual">
+      <summary>Atualizar dados manualmente (caso a atualização automática de hoje não tenha chegado)</summary>
       <div class="upload-row">
         <label class="file-btn">
           📄 Escolher arquivos (.xlsx / .csv)
           <input type="file" id="file-input" accept=".xlsx,.xls,.csv" multiple>
-            </label>
-          </div>
-          <div class="file-status" id="file-status">Nenhum arquivo carregado manualmente.</div>
-        </details>
+        </label>
       </div>
+      <div class="file-status" id="file-status">Nenhum arquivo carregado manualmente.</div>
+    </details>
+  </div>
 
-      <div class="card">
-        <h2>Pedidos de hoje ainda não escaneados</h2>
+  <div class="card">
+    <h2>Pedidos de hoje ainda não escaneados</h2>
     <div id="pending-wrap" class="muted">—</div>
   </div>
 
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-          <h2 style="margin:0;">Relatório do dia</h2>
+      <h2 style="margin:0;">Relatório do dia</h2>
       <button class="btn btn-secondary" style="width:auto;padding:8px 12px;font-size:12.5px;" id="btn-export">⬇️ Baixar .xlsx</button>
-        </div>
-        <div style="max-height:340px;overflow:auto;">
-          <table id="log-table">
-            <thead>
-              <tr>
-                <th>Horário</th><th>Plataforma</th><th>Nº da Venda</th><th class="num">Qtd</th><th class="num">Bônus (R$)</th><th></th>
+    </div>
+    <div style="max-height:340px;overflow:auto;">
+      <table id="log-table">
+        <thead>
+          <tr>
+            <th>Horário</th><th>Plataforma</th><th>Nº da Venda</th><th class="num">Qtd</th><th class="num">Bônus (R$)</th><th></th>
           </tr>
-            </thead>
-            <tbody id="log-body">
-              <tr><td colspan="6" class="empty-log">Nenhum pedido escaneado ainda.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+        </thead>
+        <tbody id="log-body">
+          <tr><td colspan="6" class="empty-log">Nenhum pedido escaneado ainda.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-    </main>
+</main>
 
-    <main id="view-panel" style="display:none;">
+<main id="view-panel" style="display:none;">
 
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <h2 style="margin:0;">Painel — histórico de dias</h2>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <h2 style="margin:0;">Painel — histórico de dias</h2>
       <button class="btn btn-secondary" style="width:auto;padding:8px 12px;font-size:12.5px;" id="btn-save-day">💾 Salvar dia no painel</button>
-        </div>
-        <div class="muted" style="margin-bottom:10px;">O bônus do dia é salvo aqui de forma permanente. Ao fim do dia, clique em "Salvar dia" — baixa um arquivo que você me manda no chat para eu consolidar no histórico.</div>
-        <div class="muted" id="panel-save-status" style="margin-bottom:10px;"></div>
-        <div style="max-height:420px;overflow:auto;">
-          <table id="history-table">
-            <thead>
-              <tr><th>Dia</th><th class="num">Shopee</th><th class="num">Mercado Livre</th><th class="num">Total bônus</th><th class="num">Pedidos</th></tr>
+    </div>
+    <div class="muted" style="margin-bottom:10px;">O bônus do dia é salvo aqui de forma permanente. Ao fim do dia, clique em "Salvar dia" — baixa um arquivo que você me manda no chat para eu consolidar no histórico.</div>
+    <div class="muted" id="panel-save-status" style="margin-bottom:10px;"></div>
+    <div style="max-height:420px;overflow:auto;">
+      <table id="history-table">
+        <thead>
+          <tr><th>Dia</th><th class="num">Shopee</th><th class="num">Mercado Livre</th><th class="num">Total bônus</th><th class="num">Pedidos</th></tr>
         </thead>
         <tbody id="history-body">
           <tr><td colspan="5" class="empty-log">Nenhum dia salvo ainda.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-    </main>
+</main>
 
-    <footer>
-      Os pedidos de Entrega Direta (Shopee) e Flex (Mercado Livre) esperados hoje são atualizados automaticamente todo dia.
-      O valor do bônus vem direto do desconto de frete / bônus por envio de cada pedido. Nada aqui é salvo entre acessos — baixe o relatório antes de fechar a página.
+<footer>
+  Os pedidos de Entrega Direta (Shopee) e Flex (Mercado Livre) esperados hoje são atualizados automaticamente todo dia.
+  O valor do bônus vem direto do desconto de frete / bônus por envio de cada pedido. Nada aqui é salvo entre acessos — baixe o relatório antes de fechar a página.
 </footer>
 
 <script>
 (function(){
-      "use strict";
+  "use strict";
 
   // =====================================================================
   // DADOS DE HOJE — bloco atualizado automaticamente todo dia.
@@ -273,100 +273,130 @@
   // =====================================================================
   /* DATA_START */
   const PRELOADED_DATA = {
-      "generatedAt": "2026-08-19T16:20:00-03:00",
-      "shopee": [
+  "generatedAt": "2026-08-20T14:09:00-03:00",
+  "shopee": [
     {
-          "orderId": "260819PTADCD7C",
-          "tracking": "BR268833867088Y",
-          "qty": 1,
-          "bonus": 8.0
+      "orderId": "260819PTADCD7C",
+      "tracking": "BR268833867088Y",
+      "qty": 1,
+      "bonus": 8.0
     },
     {
-          "orderId": "260819QGG45XE4",
-          "tracking": "BR267892096286C",
-          "qty": 1,
-          "bonus": 8.0
+      "orderId": "260819QGG45XE4",
+      "tracking": "BR267892096286C",
+      "qty": 1,
+      "bonus": 8.0
     },
     {
-          "orderId": "260819R9U8CT60",
-          "tracking": "BR263760816207F",
-          "qty": 1,
-          "bonus": 8.0
+      "orderId": "260819R9U8CT60",
+      "tracking": "BR263760816207F",
+      "qty": 1,
+      "bonus": 8.0
     },
     {
-          "orderId": "260819RGCH3PAK",
-          "tracking": "BR266739804205C",
-          "qty": 1,
-          "bonus": 8.0
+      "orderId": "260819RGCH3PAK",
+      "tracking": "BR266739804205C",
+      "qty": 1,
+      "bonus": 8.0
     },
     {
-          "orderId": "260819RJPYA1H8",
-          "tracking": "BR262127453153M",
-          "qty": 1,
-          "bonus": 8.0
+      "orderId": "260819RJPYA1H8",
+      "tracking": "BR262127453153M",
+      "qty": 1,
+      "bonus": 8.0
     },
     {
-          "orderId": "260819RKSW2JUT",
-          "tracking": "BR2608134773317",
-          "qty": 1,
-          "bonus": 8.0
+      "orderId": "260819RKSW2JUT",
+      "tracking": "BR2608134773317",
+      "qty": 1,
+      "bonus": 8.0
     },
     {
-          "orderId": "260819RMNADG7J",
-          "tracking": "BR269844575336D",
-          "qty": 1,
-          "bonus": 8.0
+      "orderId": "260819RMNADG7J",
+      "tracking": "BR269844575336D",
+      "qty": 1,
+      "bonus": 8.0
     },
     {
-          "orderId": "260819RP6E1WE3",
-          "tracking": "BR262481817490D",
-          "qty": 1,
-          "bonus": 8.0
+      "orderId": "260819RP6E1WE3",
+      "tracking": "BR262481817490D",
+      "qty": 1,
+      "bonus": 8.0
     },
     {
-          "orderId": "260819PHAUDSJD",
-                  "tracking": "BR268089455603B",
-                  "qty": 1,
-                  "bonus": 8.0
-            },
-            {
-                  "orderId": "260819PCAGNDP2",
-                  "tracking": "BR260968054095B",
-                  "qty": 1,
-                  "bonus": 8.0
-            }
+      "orderId": "260819PHAUDSJD",
+      "tracking": "BR268089455603B",
+      "qty": 1,
+      "bonus": 8.0
+    },
+    {
+      "orderId": "260819PCAGNDP2",
+      "tracking": "BR260968054095B",
+      "qty": 1,
+      "bonus": 8.0
+    }
   ],
-              "mercadoLivre": [
-            {
-                  "orderId": "2000014602707901",
-                  "tracking": "47804324397",
-                  "qty": 1,
-                  "bonus": 11.0
-            },
-            {
-                  "orderId": "2000014602624617",
-                  "tracking": "47804563418",
-                  "qty": 1,
-                  "bonus": 11.0
-            },
-            {
-                  "orderId": "2000018008353258",
-                  "tracking": "47804272566",
-                  "qty": 1,
-                  "bonus": 11.0
-            },
-            {
-                  "orderId": "2000014601971451",
-                  "tracking": "47803989317",
-                  "qty": 1,
-                  "bonus": 10.9
-            },
-            {
-                  "orderId": "2000014598911481",
-                          "tracking": "47802526929",
-                          "qty": 2,
-                          "bonus": 11.0
-                    }
+  "mercadoLivre": [
+    {
+      "orderId": "2000014602707901",
+      "tracking": "47804324397",
+      "qty": 1,
+      "bonus": 11.0
+    },
+    {
+      "orderId": "2000014602624617",
+      "tracking": "47804563418",
+      "qty": 1,
+      "bonus": 11.0
+    },
+    {
+      "orderId": "2000018008353258",
+      "tracking": "47804272566",
+      "qty": 1,
+      "bonus": 11.0
+    },
+    {
+      "orderId": "2000014601971451",
+      "tracking": "47803989317",
+      "qty": 1,
+      "bonus": 10.9
+    },
+    {
+      "orderId": "2000014598911481",
+      "tracking": "47802526929",
+      "qty": 2,
+      "bonus": 11.0
+    },
+    {
+      "orderId": "2000014622606361",
+      "tracking": "47814382528",
+      "qty": 1,
+      "bonus": 11.0
+    },
+    {
+      "orderId": "2000014618352877",
+      "tracking": "47812466496",
+      "qty": 1,
+      "bonus": 11.0
+    },
+    {
+      "orderId": "2000014617322445",
+      "tracking": "47811685153",
+      "qty": 1,
+      "bonus": 11.0
+    },
+    {
+      "orderId": "2000014610712293",
+      "tracking": "47808388461",
+      "qty": 1,
+      "bonus": 11.0
+    },
+    {
+      "orderId": "2000018017173936",
+      "tracking": "47808583090",
+      "qty": 1,
+      "bonus": 11.0
+    }
   ]
 };
   /* DATA_END */
@@ -389,18 +419,18 @@
 
   function fmtBRL(v){
     return "R$ " + (Math.round(v*100)/100).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
-}
+  }
   function nowHM(){
     const d = new Date();
     return String(d.getHours()).padStart(2,'0')+":"+String(d.getMinutes()).padStart(2,'0');
-}
+  }
   function normCode(s){ return String(s||"").trim().toUpperCase(); }
   function num(v){
     if (v===undefined||v===null||v==="") return 0;
     if (typeof v === "number") return v;
     const n = parseFloat(String(v).replace(",", "."));
     return isNaN(n) ? 0 : n;
-}
+  }
 
   function addToLookup(track, marketplace, orderId, qty, bonus){
     track = normCode(track);
@@ -410,15 +440,15 @@
     if (!item.entries.some(e => e.orderId === orderId)){
       item.entries.push({orderId, qty, bonus});
       allExpected.push({trackingCode:track, marketplace, orderId, qty, bonus, scanned:false});
-}
-}
+    }
+  }
 
   function loadPreloaded(data){
     if (!data) return;
     (data.shopee||[]).forEach(o => addToLookup(o.tracking, "Shopee", o.orderId, num(o.qty), num(o.bonus)));
     (data.mercadoLivre||[]).forEach(o => addToLookup(o.tracking, "Mercado Livre", o.orderId, num(o.qty), num(o.bonus)));
     updateFreshness(data.generatedAt);
-}
+  }
 
   function updateFreshness(generatedAt){
     const el = $("freshness"), txt = $("freshness-text");
@@ -426,7 +456,7 @@
       el.className = "freshness none";
       txt.textContent = "Nenhum dado carregado ainda. Use 'Atualizar dados manualmente' abaixo.";
       return;
-}
+    }
     const gen = new Date(generatedAt);
     const ageHours = (Date.now() - gen.getTime()) / 3600000;
     const shopeeN = (PRELOADED_DATA.shopee||[]).length;
@@ -435,11 +465,11 @@
     if (ageHours > 20){
       el.className = "freshness stale";
       txt.innerHTML = `⚠️ Dados de ${hh}:${mm} (podem estar desatualizados) — ${shopeeN} Shopee + ${mlN} Mercado Livre`;
-} else {
+    } else {
       el.className = "freshness";
       txt.innerHTML = `Dados atualizados automaticamente às ${hh}:${mm} — ${shopeeN} Shopee + ${mlN} Mercado Livre`;
-}
-}
+    }
+  }
 
   // ---------- manual file fallback (xlsx/csv upload) ----------
   function findHeaderRow(rows, mustHave){
@@ -447,15 +477,15 @@
       const row = rows[i].map(c => String(c||"").trim());
       const ok = mustHave.every(h => row.some(cell => cell === h));
       if (ok) return i;
-}
+    }
     return -1;
-}
+  }
   function colIndex(headerRow, name){
     for (let i=0;i<headerRow.length;i++){
       if (String(headerRow[i]||"").trim() === name) return i;
-}
+    }
     return -1;
-}
+  }
   function processWorkbook(wb){
     let matched = false;
     for (const sn of wb.SheetNames){
@@ -466,9 +496,9 @@
       if (hIdx >= 0){ parseShopee(rows, hIdx); matched = true; continue; }
       hIdx = findHeaderRow(rows, ["N.º de venda", "Forma de entrega"]);
       if (hIdx >= 0){ parseML(rows, hIdx); matched = true; continue; }
-      }
+    }
     return matched;
-}
+  }
   function parseShopee(rows, hIdx){
     const header = rows[hIdx];
     const cId = colIndex(header, "ID do pedido");
@@ -489,9 +519,9 @@
       const bonus = cBonus>=0 ? num(row[cBonus]) : 0;
       if (!byOrder.has(orderId)) byOrder.set(orderId, {orderId, track, qty:0, bonus});
       byOrder.get(orderId).qty += qty;
-}
+    }
     for (const entry of byOrder.values()) addToLookup(entry.track, "Shopee", entry.orderId, entry.qty, entry.bonus);
-}
+  }
   function parseML(rows, hIdx){
     const header = rows[hIdx];
     const cId = colIndex(header, "N.º de venda");
@@ -510,24 +540,24 @@
       const qty = cQty>=0 ? num(row[cQty]) : 1;
       const bonus = cBonus>=0 ? num(row[cBonus]) : 0;
       addToLookup(track, "Mercado Livre", orderId, qty, bonus);
-}
-}
+    }
+  }
   $("file-input").addEventListener("change", async (e)=>{
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
     $("file-status").textContent = "Lendo arquivos...";
     let any = false;
     for (const f of files){
-            try{
-              const data = await f.arrayBuffer();
-              const wb = XLSX.read(data, {type:"array"});
+      try{
+        const data = await f.arrayBuffer();
+        const wb = XLSX.read(data, {type:"array"});
         if (processWorkbook(wb)) any = true;
-} catch(err){ console.error("Erro lendo arquivo", f.name, err); }
-}
+      } catch(err){ console.error("Erro lendo arquivo", f.name, err); }
+    }
     $("file-status").textContent = any ? "Arquivo(s) somados aos dados já carregados." : "Nenhum arquivo reconhecido.";
     updateFreshness(new Date().toISOString());
     refreshStats(); refreshPending();
-});
+  });
 
   // ---------- scanning logic (shared by camera + manual input) ----------
   function extractCode(rawCode){
@@ -542,11 +572,11 @@
         if (obj && typeof obj === "object"){
           const cand = obj.id ?? obj.tracking ?? obj.trackingId ?? obj.tracking_id ?? obj.code;
           if (cand !== undefined && cand !== null && cand !== "") return String(cand);
-}
-} catch(e){ /* não é JSON válido, usa o texto bruto mesmo */ }
-}
+        }
+      } catch(e){ /* não é JSON válido, usa o texto bruto mesmo */ }
+    }
     return s;
-}
+  }
   function handleCode(rawCode){
     const code = normCode(extractCode(rawCode));
     if (!code) return;
@@ -558,12 +588,12 @@
       showResult("err", "⚠️ Código não encontrado", `O código <b>${code}</b> não está na lista de pedidos de hoje. Confira se é o pacote certo ou se os dados estão atualizados.`);
       renderLog();
       return;
-}
+    }
     const already = scans.find(s => s.trackingCode === code && s.found);
     if (already){
       showResult("warn", "Já bipado hoje", `Esse pedido já foi escaneado às ${already.time}. Pedido(s): ${already.orderId}.`);
       return;
-}
+    }
     const totalQty = item.entries.reduce((a,e)=>a+e.qty,0);
     const totalBonus = item.entries.reduce((a,e)=>a+e.bonus,0);
     const orderIds = item.entries.map(e=>e.orderId).join(" + ");
@@ -580,20 +610,20 @@
 
     refreshStats(); refreshPending(); renderLog();
     if (navigator.vibrate) navigator.vibrate(80);
-}
+  }
 
   function showResult(kind, title, bodyHtml){
     const el = $("result");
     el.className = "show " + kind;
     el.innerHTML = `<div class="r-title">${title}</div><div>${bodyHtml}</div>`;
-}
+  }
 
   $("btn-manual").addEventListener("click", ()=>{
     const v = $("manual-code").value; $("manual-code").value = ""; handleCode(v);
-});
+  });
   $("manual-code").addEventListener("keydown", (e)=>{
     if (e.key === "Enter"){ const v = $("manual-code").value; $("manual-code").value = ""; handleCode(v); }
-});
+  });
 
   // ---------- camera (jsQR) ----------
   let stream = null, rafId = null, lastCode = null, lastTime = 0;
@@ -604,17 +634,17 @@
   $("btn-camera").addEventListener("click", async ()=>{
     try{
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:"environment" } });
-} catch(err){
+    } catch(err){
       showResult("err","Não foi possível acessar a câmera", "Verifique se você permitiu o acesso à câmera no navegador, ou use o campo de texto abaixo com um leitor físico.");
       return;
-}
+    }
     video.srcObject = stream;
     await video.play();
     $("camera-wrap").classList.add("active");
     $("btn-camera").style.display = "none";
     $("btn-camera-stop").style.display = "block";
     tick();
-});
+  });
 
   function tick(){
     if (video.readyState === video.HAVE_ENOUGH_DATA){
@@ -628,11 +658,11 @@
         if (code.data !== lastCode || (t - lastTime) > 2500){
           lastCode = code.data; lastTime = t;
           handleCode(code.data);
-}
-}
-}
+        }
+      }
+    }
     rafId = requestAnimationFrame(tick);
-}
+  }
 
   $("btn-camera-stop").addEventListener("click", stopCamera);
   function stopCamera(){
@@ -642,7 +672,7 @@
     $("camera-wrap").classList.remove("active");
     $("btn-camera").style.display = "block";
     $("btn-camera-stop").style.display = "none";
-}
+  }
 
   // ---------- stats / log / pending ----------
   function refreshStats(){
@@ -657,7 +687,7 @@
     $("stat-ml").textContent = fmtBRL(ml.reduce((a,s)=>a+s.bonus,0));
     $("stat-ml-sub").textContent = `${ml.length} pedidos`;
     renderHistory();
-}
+  }
 
   // ---------- painel (histórico de dias) ----------
   function pad2(n){ return String(n).padStart(2,'0'); }
@@ -668,7 +698,7 @@
   function fmtDateBR(iso){
     const [y,m,d] = String(iso).split("-");
     return `${d}/${m}/${y}`;
-}
+  }
   function todaySummary(){
     const found = scans.filter(s=>s.found);
     const shopee = found.filter(s=>s.marketplace==="Shopee");
@@ -679,8 +709,8 @@
       shopeeTotal: shopee.reduce((a,s)=>a+s.bonus,0),
       mlCount: ml.length,
       mlTotal: ml.reduce((a,s)=>a+s.bonus,0),
-};
-}
+    };
+  }
   function historyRowHtml(r, opts){
     opts = opts || {};
     const total = r.shopeeTotal + r.mlTotal;
@@ -692,7 +722,7 @@
       <td class="num"><b>${fmtBRL(total)}</b></td>
       <td class="num">${count}</td>
     </tr>`;
-}
+  }
   function renderHistory(){
     const body = $("history-body");
     if (!body) return;
@@ -702,7 +732,7 @@
     if (!alreadySaved) html += historyRowHtml(todaySummary(), {live:true});
     rows.forEach(r => { html += historyRowHtml(r); });
     body.innerHTML = html || `<tr><td colspan="5" class="empty-log">Nenhum dia salvo ainda.</td></tr>`;
-}
+  }
   $("btn-save-day").addEventListener("click", ()=>{
     const summary = todaySummary();
     const snapshot = { ...summary, savedAt: new Date().toISOString(), log: scans };
@@ -712,14 +742,14 @@
     a.download = `painel_${summary.date}.json`;
     document.body.appendChild(a); a.click(); a.remove();
     $("panel-save-status").textContent = "✅ Arquivo salvo — envie esse arquivo aqui no chat para eu incorporar no histórico permanente do painel.";
-});
+  });
   function showView(view){
     $("view-scan").style.display = view === "scan" ? "" : "none";
     $("view-panel").style.display = view === "panel" ? "" : "none";
     $("tab-scan").classList.toggle("active", view === "scan");
     $("tab-panel").classList.toggle("active", view === "panel");
     if (view === "panel") renderHistory();
-}
+  }
   $("tab-scan").addEventListener("click", ()=> showView("scan"));
   $("tab-panel").addEventListener("click", ()=> showView("panel"));
 
@@ -733,10 +763,10 @@
     pending.forEach(x=>{
       const pillClass = x.marketplace === "Shopee" ? "shopee" : "ml";
       html += `<tr><td><span class="pill ${pillClass}">${x.marketplace}</span></td><td>${x.orderId}</td><td class="num">${x.qty}</td><td class="num">${fmtBRL(x.bonus)}</td></tr>`;
-});
+    });
     html += `</tbody></table></div>`;
     wrap.innerHTML = html;
-}
+  }
 
   function renderLog(){
     const body = $("log-body");
@@ -751,7 +781,7 @@
         <td class="num">${s.found? s.qty : "-"}</td><td class="num">${s.found? fmtBRL(s.bonus) : "-"}</td>
         <td><span class="undo" data-idx="${idx}">desfazer</span></td>
       </tr>`;
-});
+    });
     body.innerHTML = html;
     body.querySelectorAll(".undo").forEach(el=>{
       el.addEventListener("click", ()=>{
@@ -760,9 +790,9 @@
         if (removed.found) allExpected.forEach(x=>{ if (x.trackingCode===removed.trackingCode) x.scanned=false; });
         scans.splice(i,1);
         refreshStats(); refreshPending(); renderLog();
-});
-});
-}
+      });
+    });
+  }
 
   // ---------- export report ----------
   $("btn-export").addEventListener("click", ()=>{
@@ -784,7 +814,7 @@
     const d = new Date();
     const stamp = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
     XLSX.writeFile(wb, `Relatorio_Bonus_${stamp}.xlsx`);
-    });
+  });
 
   // ---------- init ----------
   loadPreloaded(PRELOADED_DATA);
