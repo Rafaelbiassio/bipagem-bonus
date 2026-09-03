@@ -37,26 +37,34 @@
   .tab-btn{ flex:1; padding:11px 8px; border-radius:10px; border:1px solid var(--border); background:var(--panel); color:var(--muted); font-weight:600; font-size:13px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
   .tab-btn.active{ background:var(--accent); color:#fff; border-color:var(--accent); }
 
+  .subtabbar{ display:flex; gap:8px; margin-bottom:14px; }
+  .subtab-btn{ flex:1; padding:9px 8px; border-radius:9px; border:1px solid var(--border); background:transparent; color:var(--muted); font-weight:600; font-size:12.5px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .subtab-btn.active{ background:var(--panel2); color:var(--text); border-color:var(--accent2); }
+
   main{ max-width:640px; margin:0 auto; padding:14px 12px 0; }
   .card{
     background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
     padding:16px; margin-bottom:14px;
   }
   .card h2{ font-size:14px; margin:0 0 10px; font-weight:700; }
+  .card h2 .muted-inline{ font-weight:500; color:var(--muted); font-size:12px; }
   .muted{ color:var(--muted); font-size:12.5px; }
 
-  .stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
-  .stats.has-unknown{ grid-template-columns:repeat(2,1fr); }
+  .stats{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px; }
+  .stats.stats-3{ grid-template-columns:repeat(3,1fr); }
   .stat{
     background:var(--panel); border:1px solid var(--border); border-radius:var(--radius);
     padding:14px; text-align:left;
   }
   .stat .label{ font-size:11px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
-  .stat .value{ font-size:26px; font-weight:800; margin-top:4px; }
+  .stat .value{ font-size:24px; font-weight:800; margin-top:4px; }
+  .stat .sub{ font-size:11.5px; color:var(--muted); margin-top:2px; }
+  .stat.highlight{ border-color:var(--good); }
+  .stat.highlight .value{ color:var(--good); }
 
   .pill{
     display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:600;
-    padding:3px 9px; border-radius:999px; margin-right:6px;
+    padding:3px 9px; border-radius:999px; margin-right:6px; white-space:nowrap;
   }
   .pill.shopee{ background:#3a190f; color:#ff8a65; }
   .pill.ml{ background:#3a3a00; color:#ffe600; }
@@ -104,14 +112,24 @@
   #result.warn .r-title{ color:var(--warn); }
   #result .r-code{ font-size:13px; font-family:ui-monospace,monospace; word-break:break-all; }
 
+  .field-row{ display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px; }
+  .field{ flex:1; min-width:130px; }
+  .field label{ display:block; font-size:11px; color:var(--muted); font-weight:600; margin-bottom:5px; text-transform:uppercase; letter-spacing:.02em; }
+  .field input[type=date]{
+    width:100%; padding:10px; border-radius:9px; border:1px solid var(--border);
+    background:var(--panel2); color:var(--text); font-size:13.5px; font-family:inherit;
+  }
+  .field-row .btn{ width:auto; padding:10px 14px; white-space:nowrap; }
+
   table{ width:100%; border-collapse:collapse; font-size:12.5px; }
   th,td{ text-align:left; padding:8px 6px; border-bottom:1px solid var(--border); }
   th{ color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.02em; }
-  td.num{ text-align:right; font-variant-numeric:tabular-nums; }
+  td.num{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  th.num{ text-align:right; }
+  tr.total-row td{ font-weight:800; border-top:2px solid var(--border); border-bottom:none; }
   .undo{ color:var(--muted); cursor:pointer; font-size:11px; text-decoration:underline; }
   .empty-log{ text-align:center; color:var(--muted); font-size:12.5px; padding:20px 0; }
-
-  #history-table td, #history-table th{ vertical-align:top; }
+  .table-wrap{ overflow-x:auto; }
 
   footer{ max-width:640px; margin:0 auto; padding:6px 12px 30px; color:var(--muted); font-size:11.5px; line-height:1.6; }
   a{ color:var(--accent2); }
@@ -121,17 +139,17 @@
 
 <header>
   <h1>📦 Bipagem — Controle de Envios</h1>
-  <p>Escaneie o QR code da etiqueta ao liberar cada pacote. O app identifica sozinho se é Shopee ou Mercado Livre.</p>
+  <p>Escaneie o QR code da etiqueta ao liberar cada pacote. Shopee = R$8 · Mercado Livre = R$11 por bipagem.</p>
 </header>
 
 <nav class="tabbar">
   <button class="tab-btn active" id="tab-scan" type="button">📷 Bipagem</button>
-  <button class="tab-btn" id="tab-panel" type="button">📊 Painel</button>
+  <button class="tab-btn" id="tab-reports" type="button">📊 Relatórios</button>
 </nav>
 
 <main id="view-scan">
 
-  <div class="stats" id="stats-grid">
+  <div class="stats stats-3">
     <div class="stat">
       <div class="label">Total hoje</div>
       <div class="value" id="stat-total">0</div>
@@ -139,10 +157,18 @@
     <div class="stat">
       <div class="label"><span class="pill shopee">Shopee</span></div>
       <div class="value" id="stat-shopee">0</div>
+      <div class="sub" id="stat-shopee-bonus">R$ 0,00</div>
     </div>
     <div class="stat">
       <div class="label"><span class="pill ml">Mercado Livre</span></div>
       <div class="value" id="stat-ml">0</div>
+      <div class="sub" id="stat-ml-bonus">R$ 0,00</div>
+    </div>
+  </div>
+  <div class="stats" style="grid-template-columns:1fr;">
+    <div class="stat highlight">
+      <div class="label">Bônus acumulado hoje</div>
+      <div class="value" id="stat-bonus-total">R$ 0,00</div>
     </div>
   </div>
 
@@ -167,15 +193,15 @@
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
       <h2 style="margin:0;">Log de hoje</h2>
-      <button class="btn btn-secondary" style="width:auto;padding:8px 12px;font-size:12.5px;" id="btn-export">⬇️ Baixar planilha</button>
+      <button class="btn btn-secondary" style="width:auto;padding:8px 12px;font-size:12.5px;" id="btn-export-today">⬇️ Planilha de hoje</button>
     </div>
-    <div style="max-height:340px;overflow:auto;">
+    <div style="max-height:340px;overflow:auto;" class="table-wrap">
       <table id="log-table">
         <thead>
-          <tr><th>Horário</th><th>Plataforma</th><th>Código</th><th></th></tr>
+          <tr><th>Horário</th><th>Plataforma</th><th>Código</th><th class="num">Bônus</th><th></th></tr>
         </thead>
         <tbody id="log-body">
-          <tr><td colspan="4" class="empty-log">Nenhum pacote bipado ainda.</td></tr>
+          <tr><td colspan="5" class="empty-log">Nenhum pacote bipado ainda.</td></tr>
         </tbody>
       </table>
     </div>
@@ -183,32 +209,82 @@
 
 </main>
 
-<main id="view-panel" style="display:none;">
+<main id="view-reports" style="display:none;">
 
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <h2 style="margin:0;">Painel — histórico de dias</h2>
-      <button class="btn btn-secondary" style="width:auto;padding:8px 12px;font-size:12.5px;" id="btn-save-day">💾 Salvar dia no painel</button>
+  <div class="subtabbar">
+    <button class="subtab-btn active" id="subtab-daily" type="button">Relatório diário</button>
+    <button class="subtab-btn" id="subtab-range" type="button">Por período</button>
+  </div>
+
+  <div id="report-daily">
+    <div class="card">
+      <div class="field-row" style="margin-bottom:0;">
+        <div class="field">
+          <label for="daily-date">Escolha o dia</label>
+          <input type="date" id="daily-date">
+        </div>
+        <button class="btn btn-secondary" id="btn-export-daily">⬇️ Baixar planilha do dia</button>
+      </div>
     </div>
-    <div class="muted" style="margin-bottom:10px;">O total do dia é salvo aqui de forma permanente. Ao fim do dia, clique em "Salvar dia" — baixa um arquivo que você me manda no chat para eu consolidar no histórico.</div>
-    <div class="muted" id="panel-save-status" style="margin-bottom:10px;"></div>
-    <div style="max-height:420px;overflow:auto;">
-      <table id="history-table">
-        <thead>
-          <tr><th>Dia</th><th class="num">Shopee</th><th class="num">Mercado Livre</th><th class="num">Total</th></tr>
-        </thead>
-        <tbody id="history-body">
-          <tr><td colspan="4" class="empty-log">Nenhum dia salvo ainda.</td></tr>
-        </tbody>
-      </table>
+    <div class="card">
+      <h2 id="daily-summary-title">Resumo do dia</h2>
+      <div class="stats stats-3" id="daily-stats" style="margin-bottom:0;">
+      </div>
+    </div>
+    <div class="card">
+      <h2>Bipagens do dia</h2>
+      <div class="table-wrap" style="max-height:360px;overflow:auto;">
+        <table id="daily-table">
+          <thead>
+            <tr><th>Horário</th><th>Plataforma</th><th>Código</th><th class="num">Bônus</th></tr>
+          </thead>
+          <tbody id="daily-body">
+            <tr><td colspan="4" class="empty-log">Nenhum dado para esse dia.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="report-range" style="display:none;">
+    <div class="card">
+      <div class="field-row" style="margin-bottom:0;">
+        <div class="field">
+          <label for="range-from">De</label>
+          <input type="date" id="range-from">
+        </div>
+        <div class="field">
+          <label for="range-to">Até</label>
+          <input type="date" id="range-to">
+        </div>
+        <button class="btn btn-secondary" id="btn-export-range">⬇️ Baixar planilha do período</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Resumo do período</h2>
+      <div class="stats stats-3" id="range-stats" style="margin-bottom:0;">
+      </div>
+    </div>
+    <div class="card">
+      <h2>Dia a dia</h2>
+      <div class="table-wrap" style="max-height:420px;overflow:auto;">
+        <table id="range-table">
+          <thead>
+            <tr><th>Dia</th><th class="num">Shopee</th><th class="num">Mercado Livre</th><th class="num">Total</th><th class="num">Bônus</th></tr>
+          </thead>
+          <tbody id="range-body">
+            <tr><td colspan="5" class="empty-log">Nenhum dado no período.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
 </main>
 
 <footer>
-  Esse app só conta e diferencia pedidos Shopee e Mercado Livre pelo QR code da etiqueta — não usa valores, preços ou bônus.
-  Nada aqui é salvo entre acessos além do que você baixar — baixe a planilha antes de fechar a página.
+  Esse app conta e diferencia pedidos Shopee (R$8/bipagem) e Mercado Livre (R$11/bipagem) pelo QR code da etiqueta.
+  Os dados ficam salvos automaticamente neste navegador/aparelho — se limpar os dados do navegador ou trocar de aparelho, o histórico não acompanha.
 </footer>
 
 <script>
@@ -216,14 +292,21 @@
   "use strict";
 
   const $ = (id) => document.getElementById(id);
+  const STORAGE_KEY = "bipagem_bonus_history_v1";
+  const BONUS = { "Shopee": 8, "Mercado Livre": 11 };
 
-  // ---------- state ----------
-  let scans = [];       // {time, marketplace, code, dupe}
-  let seenCodes = new Set();
+  // ---------- storage ----------
+  function loadHistory(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch(e){ return {}; }
+  }
+  function saveHistory(h){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(h)); } catch(e){ /* ignora se indisponível */ }
+  }
 
-  /* HISTORY_START */
-  const HISTORY = [];
-  /* HISTORY_END */
+  let history = loadHistory(); // { "2026-09-03": [ {time, marketplace, code}, ... ], ... }
 
   function pad2(n){ return String(n).padStart(2,'0'); }
   function localDateStr(d){ return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate()); }
@@ -237,6 +320,17 @@
     return String(d.getHours()).padStart(2,'0')+":"+String(d.getMinutes()).padStart(2,'0');
   }
   function normCode(s){ return String(s||"").trim(); }
+  function fmtBRL(n){ return "R$ " + Number(n||0).toFixed(2).replace(".", ","); }
+  function bonusFor(marketplace){ return BONUS[marketplace] || 0; }
+
+  // ---------- today's live scans (backed by history[todayDateStr]) ----------
+  let scans = history[todayDateStr] ? history[todayDateStr].slice() : [];
+  let seenCodes = new Set(scans.map(s=>s.code));
+
+  function persistToday(){
+    history[todayDateStr] = scans;
+    saveHistory(history);
+  }
 
   // ---------- classify raw QR / typed content as Shopee or Mercado Livre ----------
   function classify(rawCode){
@@ -280,16 +374,19 @@
 
     seenCodes.add(code);
     scans.push({ time, marketplace, code });
+    persistToday();
 
     if (marketplace === "Desconhecido"){
       showResult("err", "❓ Não identificado", `Código <div class="r-code">${code}</div> não parece Shopee nem Mercado Livre — registrado mesmo assim, confira manualmente.`);
     } else {
       const pillClass = marketplace === "Shopee" ? "shopee" : "ml";
-      showResult("ok", `✅ ${marketplace}`, `<span class="pill ${pillClass}">${marketplace}</span><div class="r-code">${code}</div>`);
+      showResult("ok", `✅ ${marketplace} · ${fmtBRL(bonusFor(marketplace))}`, `<span class="pill ${pillClass}">${marketplace}</span><div class="r-code">${code}</div>`);
       if (navigator.vibrate) navigator.vibrate(80);
     }
 
     refreshStats(); renderLog();
+    if (currentReportsView === "daily" && $("daily-date").value === todayDateStr) renderDailyReport();
+    if (currentReportsView === "range") renderRangeReport();
   }
 
   function showResult(kind, title, bodyHtml){
@@ -354,43 +451,41 @@
     $("btn-camera-stop").style.display = "none";
   }
 
-  // ---------- stats / log ----------
-  function refreshStats(){
-    const shopee = scans.filter(s=>s.marketplace==="Shopee");
-    const ml = scans.filter(s=>s.marketplace==="Mercado Livre");
-    const unknown = scans.filter(s=>s.marketplace==="Desconhecido");
-    $("stat-total").textContent = scans.length;
-    $("stat-shopee").textContent = shopee.length;
-    $("stat-ml").textContent = ml.length;
+  // ---------- stats / log (today, tela de bipagem) ----------
+  function summarize(list){
+    const shopee = list.filter(s=>s.marketplace==="Shopee");
+    const ml = list.filter(s=>s.marketplace==="Mercado Livre");
+    const unknown = list.filter(s=>s.marketplace==="Desconhecido");
+    const shopeeBonus = shopee.length * BONUS["Shopee"];
+    const mlBonus = ml.length * BONUS["Mercado Livre"];
+    return {
+      shopee, ml, unknown,
+      shopeeCount: shopee.length, mlCount: ml.length, unknownCount: unknown.length,
+      total: list.length,
+      shopeeBonus, mlBonus, bonusTotal: shopeeBonus + mlBonus,
+    };
+  }
 
-    const grid = $("stats-grid");
-    let unknownStat = document.getElementById("stat-unknown-tile");
-    if (unknown.length){
-      grid.classList.add("has-unknown");
-      if (!unknownStat){
-        unknownStat = document.createElement("div");
-        unknownStat.className = "stat";
-        unknownStat.id = "stat-unknown-tile";
-        unknownStat.innerHTML = `<div class="label"><span class="pill unknown">Não identificado</span></div><div class="value" id="stat-unknown">0</div>`;
-        grid.appendChild(unknownStat);
-      }
-      $("stat-unknown").textContent = unknown.length;
-    } else if (unknownStat){
-      unknownStat.remove();
-      grid.classList.remove("has-unknown");
-    }
-    renderHistory();
+  function refreshStats(){
+    const s = summarize(scans);
+    $("stat-total").textContent = s.total;
+    $("stat-shopee").textContent = s.shopeeCount;
+    $("stat-shopee-bonus").textContent = fmtBRL(s.shopeeBonus);
+    $("stat-ml").textContent = s.mlCount;
+    $("stat-ml-bonus").textContent = fmtBRL(s.mlBonus);
+    $("stat-bonus-total").textContent = fmtBRL(s.bonusTotal);
   }
 
   function renderLog(){
     const body = $("log-body");
-    if (!scans.length){ body.innerHTML = `<tr><td colspan="4" class="empty-log">Nenhum pacote bipado ainda.</td></tr>`; return; }
+    if (!scans.length){ body.innerHTML = `<tr><td colspan="5" class="empty-log">Nenhum pacote bipado ainda.</td></tr>`; return; }
     let html = "";
     scans.slice().reverse().forEach((s, revIdx)=>{
       const idx = scans.length - 1 - revIdx;
       const pillClass = s.marketplace === "Shopee" ? "shopee" : (s.marketplace === "Mercado Livre" ? "ml" : "unknown");
       html += `<tr>
         <td>${s.time}</td><td><span class="pill ${pillClass}">${s.marketplace}</span></td><td>${s.code}</td>
+        <td class="num">${fmtBRL(bonusFor(s.marketplace))}</td>
         <td><span class="undo" data-idx="${idx}">desfazer</span></td>
       </tr>`;
     });
@@ -401,89 +496,191 @@
         const removed = scans[i];
         seenCodes.delete(removed.code);
         scans.splice(i,1);
+        persistToday();
         refreshStats(); renderLog();
+        if (currentReportsView === "daily" && $("daily-date").value === todayDateStr) renderDailyReport();
+        if (currentReportsView === "range") renderRangeReport();
       });
     });
   }
 
-  // ---------- painel (histórico de dias) ----------
-  function todaySummary(){
-    const shopee = scans.filter(s=>s.marketplace==="Shopee");
-    const ml = scans.filter(s=>s.marketplace==="Mercado Livre");
-    const unknown = scans.filter(s=>s.marketplace==="Desconhecido");
-    return {
-      date: todayDateStr,
-      shopeeCount: shopee.length,
-      mlCount: ml.length,
-      unknownCount: unknown.length,
-      total: scans.length,
-    };
-  }
-  function historyRowHtml(r, opts){
-    opts = opts || {};
-    return `<tr${opts.live ? ' style="opacity:.85;"' : ''}>
-      <td>${fmtDateBR(r.date)}${opts.live ? ' <span class="muted" style="font-size:10.5px;">(hoje, ao vivo)</span>' : ''}</td>
-      <td class="num">${r.shopeeCount}</td>
-      <td class="num">${r.mlCount}</td>
-      <td class="num"><b>${r.total}</b></td>
-    </tr>`;
-  }
-  function renderHistory(){
-    const body = $("history-body");
-    if (!body) return;
-    const rows = HISTORY.slice().sort((a,b)=> b.date.localeCompare(a.date));
-    const alreadySaved = rows.some(r => r.date === todayDateStr);
-    let html = "";
-    if (!alreadySaved) html += historyRowHtml(todaySummary(), {live:true});
-    rows.forEach(r => { html += historyRowHtml(r); });
-    body.innerHTML = html || `<tr><td colspan="4" class="empty-log">Nenhum dia salvo ainda.</td></tr>`;
-  }
-  $("btn-save-day").addEventListener("click", ()=>{
-    const summary = todaySummary();
-    const snapshot = { ...summary, savedAt: new Date().toISOString(), log: scans };
-    const blob = new Blob([JSON.stringify(snapshot, null, 2)], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `painel_${summary.date}.json`;
-    document.body.appendChild(a); a.click(); a.remove();
-    $("panel-save-status").textContent = "✅ Arquivo salvo — envie esse arquivo aqui no chat para eu incorporar no histórico permanente do painel.";
-  });
+  $("btn-export-today").addEventListener("click", ()=> exportDay(todayDateStr));
+
+  // ---------- tabs (Bipagem / Relatórios) ----------
   function showView(view){
     $("view-scan").style.display = view === "scan" ? "" : "none";
-    $("view-panel").style.display = view === "panel" ? "" : "none";
+    $("view-reports").style.display = view === "reports" ? "" : "none";
     $("tab-scan").classList.toggle("active", view === "scan");
-    $("tab-panel").classList.toggle("active", view === "panel");
-    if (view === "panel") renderHistory();
+    $("tab-reports").classList.toggle("active", view === "reports");
+    if (view === "reports"){
+      if (currentReportsView === "daily") renderDailyReport(); else renderRangeReport();
+    }
   }
   $("tab-scan").addEventListener("click", ()=> showView("scan"));
-  $("tab-panel").addEventListener("click", ()=> showView("panel"));
+  $("tab-reports").addEventListener("click", ()=> showView("reports"));
 
-  // ---------- export spreadsheet ----------
-  $("btn-export").addEventListener("click", ()=>{
-    const rows = [["Horário","Plataforma","Código"]];
-    scans.forEach(s=> rows.push([s.time, s.marketplace, s.code]));
-    rows.push([]);
-    const shopee = scans.filter(s=>s.marketplace==="Shopee");
-    const ml = scans.filter(s=>s.marketplace==="Mercado Livre");
-    const unknown = scans.filter(s=>s.marketplace==="Desconhecido");
-    rows.push(["Resumo","",""]);
-    rows.push(["Total Shopee", shopee.length, ""]);
-    rows.push(["Total Mercado Livre", ml.length, ""]);
-    if (unknown.length) rows.push(["Total não identificado", unknown.length, ""]);
-    rows.push(["Total geral", scans.length, ""]);
+  // ---------- sub-tabs dentro de Relatórios ----------
+  let currentReportsView = "daily";
+  function showReportsSubview(view){
+    currentReportsView = view;
+    $("report-daily").style.display = view === "daily" ? "" : "none";
+    $("report-range").style.display = view === "range" ? "" : "none";
+    $("subtab-daily").classList.toggle("active", view === "daily");
+    $("subtab-range").classList.toggle("active", view === "range");
+    if (view === "daily") renderDailyReport(); else renderRangeReport();
+  }
+  $("subtab-daily").addEventListener("click", ()=> showReportsSubview("daily"));
+  $("subtab-range").addEventListener("click", ()=> showReportsSubview("range"));
+
+  // ---------- relatório diário ----------
+  $("daily-date").value = todayDateStr;
+  $("daily-date").addEventListener("change", renderDailyReport);
+  $("btn-export-daily").addEventListener("click", ()=> exportDay($("daily-date").value));
+
+  function statTileHtml(label, value, sub, pillClass, pillLabel){
+    const labelHtml = pillClass ? `<span class="pill ${pillClass}">${pillLabel}</span>` : label;
+    return `<div class="stat">
+      <div class="label">${labelHtml}</div>
+      <div class="value">${value}</div>
+      ${sub ? `<div class="sub">${sub}</div>` : ""}
+    </div>`;
+  }
+
+  function renderDailyReport(){
+    const date = $("daily-date").value || todayDateStr;
+    const list = history[date] || [];
+    const s = summarize(list);
+    $("daily-summary-title").textContent = "Resumo do dia — " + fmtDateBR(date) + (date === todayDateStr ? " (hoje)" : "");
+    $("daily-stats").innerHTML =
+      statTileHtml("Total", s.total, fmtBRL(s.bonusTotal) + " de bônus") +
+      statTileHtml("Shopee", s.shopeeCount, fmtBRL(s.shopeeBonus), "shopee", "Shopee") +
+      statTileHtml("Mercado Livre", s.mlCount, fmtBRL(s.mlBonus), "ml", "Mercado Livre");
+
+    const body = $("daily-body");
+    if (!list.length){ body.innerHTML = `<tr><td colspan="4" class="empty-log">Nenhum dado para esse dia.</td></tr>`; return; }
+    let html = "";
+    list.slice().reverse().forEach(s=>{
+      const pillClass = s.marketplace === "Shopee" ? "shopee" : (s.marketplace === "Mercado Livre" ? "ml" : "unknown");
+      html += `<tr>
+        <td>${s.time}</td><td><span class="pill ${pillClass}">${s.marketplace}</span></td><td>${s.code}</td>
+        <td class="num">${fmtBRL(bonusFor(s.marketplace))}</td>
+      </tr>`;
+    });
+    html += `<tr class="total-row"><td colspan="3">Total (${list.length})</td><td class="num">${fmtBRL(s.bonusTotal)}</td></tr>`;
+    body.innerHTML = html;
+  }
+
+  // ---------- relatório por período ----------
+  (function initRangeDefaults(){
+    const to = new Date();
+    const from = new Date(); from.setDate(from.getDate() - 6);
+    $("range-from").value = localDateStr(from);
+    $("range-to").value = localDateStr(to);
+  })();
+  $("range-from").addEventListener("change", renderRangeReport);
+  $("range-to").addEventListener("change", renderRangeReport);
+  $("btn-export-range").addEventListener("click", exportRange);
+
+  function datesInRange(from, to){
+    const out = [];
+    if (!from || !to || from > to) return out;
+    let cur = new Date(from + "T00:00:00");
+    const end = new Date(to + "T00:00:00");
+    while (cur <= end){
+      out.push(localDateStr(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return out;
+  }
+
+  function renderRangeReport(){
+    const from = $("range-from").value, to = $("range-to").value;
+    const days = datesInRange(from, to);
+    let grandShopee = 0, grandMl = 0, grandUnknown = 0, grandTotal = 0, grandBonus = 0;
+    let rowsHtml = "";
+    days.forEach(date=>{
+      const list = history[date] || [];
+      if (!list.length) return;
+      const s = summarize(list);
+      grandShopee += s.shopeeCount; grandMl += s.mlCount; grandUnknown += s.unknownCount;
+      grandTotal += s.total; grandBonus += s.bonusTotal;
+      rowsHtml += `<tr>
+        <td>${fmtDateBR(date)}</td>
+        <td class="num">${s.shopeeCount}</td>
+        <td class="num">${s.mlCount}</td>
+        <td class="num">${s.total}</td>
+        <td class="num">${fmtBRL(s.bonusTotal)}</td>
+      </tr>`;
+    });
+
+    $("range-stats").innerHTML =
+      statTileHtml("Total no período", grandTotal, fmtBRL(grandBonus) + " de bônus") +
+      statTileHtml("Shopee", grandShopee, fmtBRL(grandShopee * BONUS["Shopee"]), "shopee", "Shopee") +
+      statTileHtml("Mercado Livre", grandMl, fmtBRL(grandMl * BONUS["Mercado Livre"]), "ml", "Mercado Livre");
+
+    const body = $("range-body");
+    if (!rowsHtml){ body.innerHTML = `<tr><td colspan="5" class="empty-log">Nenhum dado no período.</td></tr>`; return; }
+    rowsHtml += `<tr class="total-row"><td>Total</td><td class="num">${grandShopee}</td><td class="num">${grandMl}</td><td class="num">${grandTotal}</td><td class="num">${fmtBRL(grandBonus)}</td></tr>`;
+    body.innerHTML = rowsHtml;
+  }
+
+  // ---------- export spreadsheets ----------
+  function buildLogSheet(list){
+    const rows = [["Data","Horário","Plataforma","Código","Bônus (R$)"]];
+    list.forEach(s=> rows.push([s.date || todayDateStr, s.time, s.marketplace, s.code, bonusFor(s.marketplace)]));
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wch:10},{wch:18},{wch:22}];
+    ws['!cols'] = [{wch:11},{wch:9},{wch:16},{wch:22},{wch:12}];
+    return ws;
+  }
+
+  function exportDay(date){
+    const list = history[date] || [];
+    const s = summarize(list);
+    const logRows = [["Horário","Plataforma","Código","Bônus (R$)"]];
+    list.forEach(x=> logRows.push([x.time, x.marketplace, x.code, bonusFor(x.marketplace)]));
+    logRows.push([]);
+    logRows.push(["Resumo do dia " + fmtDateBR(date), "", "", ""]);
+    logRows.push(["Total Shopee", s.shopeeCount, "Bônus Shopee", s.shopeeBonus]);
+    logRows.push(["Total Mercado Livre", s.mlCount, "Bônus Mercado Livre", s.mlBonus]);
+    if (s.unknownCount) logRows.push(["Total não identificado", s.unknownCount, "", ""]);
+    logRows.push(["Total geral", s.total, "Bônus total", s.bonusTotal]);
+    const ws = XLSX.utils.aoa_to_sheet(logRows);
+    ws['!cols'] = [{wch:22},{wch:14},{wch:16},{wch:14}];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Bipagem do Dia");
-    const d = new Date();
-    const stamp = d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
-    XLSX.writeFile(wb, `Bipagem_${stamp}.xlsx`);
-  });
+    XLSX.utils.book_append_sheet(wb, ws, "Relatório " + date);
+    XLSX.writeFile(wb, `Bipagem_${date.replace(/-/g,"")}.xlsx`);
+  }
+
+  function exportRange(){
+    const from = $("range-from").value, to = $("range-to").value;
+    const days = datesInRange(from, to);
+    const summaryRows = [["Dia","Shopee","Mercado Livre","Total","Bônus (R$)"]];
+    const fullLog = [];
+    let grandShopee = 0, grandMl = 0, grandTotal = 0, grandBonus = 0;
+    days.forEach(date=>{
+      const list = history[date] || [];
+      if (!list.length) return;
+      const s = summarize(list);
+      summaryRows.push([fmtDateBR(date), s.shopeeCount, s.mlCount, s.total, s.bonusTotal]);
+      grandShopee += s.shopeeCount; grandMl += s.mlCount; grandTotal += s.total; grandBonus += s.bonusTotal;
+      list.forEach(x=> fullLog.push(Object.assign({date}, x)));
+    });
+    summaryRows.push([]);
+    summaryRows.push(["Total do período", grandShopee, grandMl, grandTotal, grandBonus]);
+
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols'] = [{wch:12},{wch:10},{wch:16},{wch:10},{wch:14}];
+    const wsLog = buildLogSheet(fullLog);
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Resumo por dia");
+    XLSX.utils.book_append_sheet(wb, wsLog, "Detalhado");
+    XLSX.writeFile(wb, `Bipagem_${from.replace(/-/g,"")}_a_${to.replace(/-/g,"")}.xlsx`);
+  }
 
   // ---------- init ----------
   refreshStats();
   renderLog();
-  renderHistory();
 })();
 </script>
 </body>
