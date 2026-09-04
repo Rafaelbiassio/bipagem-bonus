@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bipagem — Controle de Envios</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   :root{
@@ -624,58 +624,170 @@
     body.innerHTML = rowsHtml;
   }
 
-  // ---------- export spreadsheets ----------
-  function buildLogSheet(list){
-    const rows = [["Data","Horário","Plataforma","Código","Bônus (R$)"]];
-    list.forEach(s=> rows.push([s.date || todayDateStr, s.time, s.marketplace, s.code, bonusFor(s.marketplace)]));
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wch:11},{wch:9},{wch:16},{wch:22},{wch:12}];
-    return ws;
+  // ---------- export spreadsheets (ExcelJS, com estilo) ----------
+  function platformArgb(marketplace){
+    if (marketplace === 'Shopee') return 'FFFFE0D6';
+    if (marketplace === 'Mercado Livre') return 'FFFFF3B0';
+    return 'FFE8E8E8';
   }
 
-  function exportDay(date){
+  function styleTitle(ws, rowNum, text, numCols){
+    ws.mergeCells(rowNum,1,rowNum,numCols);
+    const cell = ws.getCell(rowNum,1);
+    cell.value = text;
+    cell.font = { bold:true, size:14, color:{argb:'FFFFFFFF'} };
+    cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF2F5FDB'} };
+    cell.alignment = { vertical:'middle', horizontal:'left' };
+    ws.getRow(rowNum).height = 26;
+  }
+
+  function styleHeaderRow(row){
+    row.eachCell(cell=>{
+      cell.font = { bold:true, color:{argb:'FFFFFFFF'} };
+      cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF1F2937'} };
+      cell.alignment = { vertical:'middle', horizontal:'center' };
+      cell.border = { bottom:{style:'thin', color:{argb:'FFDDDDDD'}} };
+    });
+  }
+
+  function styleDataRow(row, marketplaceColIdx, bonusColIdx, zebra){
+    row.eachCell((cell)=>{
+      cell.border = { bottom:{style:'thin', color:{argb:'FFEEEEEE'}} };
+      if (zebra) { cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF7F8FA'}}; }
+    });
+    if (marketplaceColIdx){
+      const c = row.getCell(marketplaceColIdx);
+      c.fill = {type:'pattern', pattern:'solid', fgColor:{argb: platformArgb(c.value)}};
+      c.alignment = {horizontal:'center'};
+    }
+    if (bonusColIdx){
+      row.getCell(bonusColIdx).numFmt = '"R$" #,##0.00';
+      row.getCell(bonusColIdx).alignment = {horizontal:'right'};
+    }
+  }
+
+  function styleTotalRow(row){
+    row.eachCell(cell=>{
+      cell.font = { bold:true };
+      cell.border = { top:{style:'medium', color:{argb:'FF333333'}} };
+      cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFEFF3FF'}};
+    });
+  }
+
+  async function downloadWorkbook(wb, filename){
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=> URL.revokeObjectURL(url), 4000);
+  }
+
+  async function exportDay(date){
     const list = history[date] || [];
     const s = summarize(list);
-    const logRows = [["Horário","Plataforma","Código","Bônus (R$)"]];
-    list.forEach(x=> logRows.push([x.time, x.marketplace, x.code, bonusFor(x.marketplace)]));
-    logRows.push([]);
-    logRows.push(["Resumo do dia " + fmtDateBR(date), "", "", ""]);
-    logRows.push(["Total Shopee", s.shopeeCount, "Bônus Shopee", s.shopeeBonus]);
-    logRows.push(["Total Mercado Livre", s.mlCount, "Bônus Mercado Livre", s.mlBonus]);
-    if (s.unknownCount) logRows.push(["Total não identificado", s.unknownCount, "", ""]);
-    logRows.push(["Total geral", s.total, "Bônus total", s.bonusTotal]);
-    const ws = XLSX.utils.aoa_to_sheet(logRows);
-    ws['!cols'] = [{wch:22},{wch:14},{wch:16},{wch:14}];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Relatório " + date);
-    XLSX.writeFile(wb, `Bipagem_${date.replace(/-/g,"")}.xlsx`);
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Bipagem'; wb.created = new Date();
+    const ws = wb.addWorksheet('Relatório ' + date);
+    ws.getColumn(1).width = 14; ws.getColumn(2).width = 18; ws.getColumn(3).width = 24; ws.getColumn(4).width = 16;
+
+    let r = 1;
+    styleTitle(ws, r, 'Relatório de Bipagem — ' + fmtDateBR(date), 4); r++;
+    r++;
+
+    const summaryStart = r;
+    ws.getCell(r,1).value = 'Total de bipagens'; ws.getCell(r,2).value = s.total; r++;
+    ws.getCell(r,1).value = 'Shopee'; ws.getCell(r,2).value = s.shopeeCount; ws.getCell(r,3).value='Bônus Shopee'; ws.getCell(r,4).value = s.shopeeBonus; ws.getCell(r,4).numFmt='"R$" #,##0.00'; r++;
+    ws.getCell(r,1).value = 'Mercado Livre'; ws.getCell(r,2).value = s.mlCount; ws.getCell(r,3).value='Bônus Mercado Livre'; ws.getCell(r,4).value = s.mlBonus; ws.getCell(r,4).numFmt='"R$" #,##0.00'; r++;
+    if (s.unknownCount){ ws.getCell(r,1).value='Não identificado'; ws.getCell(r,2).value=s.unknownCount; r++; }
+    ws.getCell(r,1).value = 'Bônus total'; ws.getCell(r,1).font={bold:true};
+    ws.getCell(r,2).value = s.bonusTotal; ws.getCell(r,2).numFmt='"R$" #,##0.00'; ws.getCell(r,2).font={bold:true, color:{argb:'FF158A45'}};
+    r++;
+    for (let rr=summaryStart; rr<r; rr++){ for(let cc=1;cc<=4;cc++){ ws.getCell(rr,cc).fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFF7F8FA'}}; } }
+    r++;
+
+    const headerRowNum = r;
+    const headerRow = ws.getRow(r);
+    headerRow.values = ['Horário','Plataforma','Código','Bônus (R$)'];
+    styleHeaderRow(headerRow);
+    r++;
+
+    list.forEach((x, idx)=>{
+      const row = ws.getRow(r);
+      row.values = [x.time, x.marketplace, x.code, bonusFor(x.marketplace)];
+      styleDataRow(row, 2, 4, idx % 2 === 1);
+      r++;
+    });
+
+    const totalRow = ws.getRow(r);
+    totalRow.values = ['Total (' + list.length + ')', '', '', s.bonusTotal];
+    ws.mergeCells(r,1,r,3);
+    totalRow.getCell(4).numFmt = '"R$" #,##0.00';
+    styleTotalRow(totalRow);
+
+    ws.autoFilter = { from: {row: headerRowNum, column:1}, to:{row: headerRowNum, column:4} };
+    ws.views = [{ state:'frozen', ySplit: headerRowNum }];
+
+    await downloadWorkbook(wb, `Bipagem_${date.replace(/-/g,"")}.xlsx`);
   }
 
-  function exportRange(){
+  async function exportRange(){
     const from = $("range-from").value, to = $("range-to").value;
     const days = datesInRange(from, to);
-    const summaryRows = [["Dia","Shopee","Mercado Livre","Total","Bônus (R$)"]];
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Bipagem'; wb.created = new Date();
+
+    const wsSummary = wb.addWorksheet('Resumo por dia');
+    wsSummary.getColumn(1).width = 14; wsSummary.getColumn(2).width = 10; wsSummary.getColumn(3).width = 16; wsSummary.getColumn(4).width = 10; wsSummary.getColumn(5).width = 14;
+    let r = 1;
+    styleTitle(wsSummary, r, `Resumo por dia — ${fmtDateBR(from)} a ${fmtDateBR(to)}`, 5); r++;
+    r++;
+    const headerRowNum = r;
+    const headerRow = wsSummary.getRow(r);
+    headerRow.values = ['Dia','Shopee','Mercado Livre','Total','Bônus (R$)'];
+    styleHeaderRow(headerRow);
+    r++;
+    let grandShopee=0, grandMl=0, grandTotal=0, grandBonus=0;
     const fullLog = [];
-    let grandShopee = 0, grandMl = 0, grandTotal = 0, grandBonus = 0;
-    days.forEach(date=>{
+    days.forEach((date, idx) => {
       const list = history[date] || [];
       if (!list.length) return;
       const s = summarize(list);
-      summaryRows.push([fmtDateBR(date), s.shopeeCount, s.mlCount, s.total, s.bonusTotal]);
+      const row = wsSummary.getRow(r);
+      row.values = [fmtDateBR(date), s.shopeeCount, s.mlCount, s.total, s.bonusTotal];
+      styleDataRow(row, null, 5, idx % 2 === 1);
       grandShopee += s.shopeeCount; grandMl += s.mlCount; grandTotal += s.total; grandBonus += s.bonusTotal;
-      list.forEach(x=> fullLog.push(Object.assign({date}, x)));
+      list.forEach(x => fullLog.push(Object.assign({date}, x)));
+      r++;
     });
-    summaryRows.push([]);
-    summaryRows.push(["Total do período", grandShopee, grandMl, grandTotal, grandBonus]);
+    const totalRow = wsSummary.getRow(r);
+    totalRow.values = ['Total do período', grandShopee, grandMl, grandTotal, grandBonus];
+    totalRow.getCell(5).numFmt = '"R$" #,##0.00';
+    styleTotalRow(totalRow);
+    wsSummary.autoFilter = { from:{row:headerRowNum, column:1}, to:{row:headerRowNum, column:5} };
+    wsSummary.views = [{ state:'frozen', ySplit: headerRowNum }];
 
-    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
-    wsSummary['!cols'] = [{wch:12},{wch:10},{wch:16},{wch:10},{wch:14}];
-    const wsLog = buildLogSheet(fullLog);
+    const wsLog = wb.addWorksheet('Detalhado');
+    wsLog.getColumn(1).width = 12; wsLog.getColumn(2).width = 10; wsLog.getColumn(3).width = 18; wsLog.getColumn(4).width = 24; wsLog.getColumn(5).width = 14;
+    let r2 = 1;
+    styleTitle(wsLog, r2, 'Detalhado — todas as bipagens do período', 5); r2++;
+    r2++;
+    const logHeaderRowNum = r2;
+    const logHeaderRow = wsLog.getRow(r2);
+    logHeaderRow.values = ['Data','Horário','Plataforma','Código','Bônus (R$)'];
+    styleHeaderRow(logHeaderRow);
+    r2++;
+    fullLog.forEach((x, idx) => {
+      const row = wsLog.getRow(r2);
+      row.values = [fmtDateBR(x.date), x.time, x.marketplace, x.code, bonusFor(x.marketplace)];
+      styleDataRow(row, 3, 5, idx % 2 === 1);
+      r2++;
+    });
+    wsLog.autoFilter = { from:{row:logHeaderRowNum, column:1}, to:{row:logHeaderRowNum, column:5} };
+    wsLog.views = [{ state:'frozen', ySplit: logHeaderRowNum }];
 
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, wsSummary, "Resumo por dia");
-    XLSX.utils.book_append_sheet(wb, wsLog, "Detalhado");
-    XLSX.writeFile(wb, `Bipagem_${from.replace(/-/g,"")}_a_${to.replace(/-/g,"")}.xlsx`);
+    await downloadWorkbook(wb, `Bipagem_${from.replace(/-/g,"")}_a_${to.replace(/-/g,"")}.xlsx`);
   }
 
   // ---------- init ----------
