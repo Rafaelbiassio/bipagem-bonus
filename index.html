@@ -6,6 +6,9 @@
 <title>Bipagem — Controle de Envios</title>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --border:#2a2f3a;
@@ -140,6 +143,7 @@
 <header>
   <h1>📦 Bipagem — Controle de Envios</h1>
   <p>Escaneie o QR code da etiqueta ao liberar cada pacote. Shopee = R$8 · Mercado Livre = R$11 por bipagem.</p>
+  <p id="sync-status" style="margin:4px 0 0;font-size:11px;color:var(--muted);">🔄 Conectando...</p>
 </header>
 
 <nav class="tabbar">
@@ -284,7 +288,7 @@
 
 <footer>
   Esse app conta e diferencia pedidos Shopee (R$8/bipagem) e Mercado Livre (R$11/bipagem) pelo QR code da etiqueta.
-  Os dados ficam salvos automaticamente neste navegador/aparelho — se limpar os dados do navegador ou trocar de aparelho, o histórico não acompanha.
+  Os dados ficam salvos na nuvem e sincronizados automaticamente entre todos os aparelhos que acessarem este link — é necessário estar conectado à internet para bipar e ver os dados atualizados.
 </footer>
 
 <script>
@@ -292,21 +296,76 @@
   "use strict";
 
   const $ = (id) => document.getElementById(id);
-  const STORAGE_KEY = "bipagem_bonus_history_v1";
   const BONUS = { "Shopee": 8, "Mercado Livre": 11 };
 
-  // ---------- storage ----------
-  function loadHistory(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch(e){ return {}; }
-  }
-  function saveHistory(h){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(h)); } catch(e){ /* ignora se indisponível */ }
+  // ---------- Firebase (banco de dados compartilhado — sincroniza todos os aparelhos) ----------
+  const firebaseConfig = {
+    apiKey: "AIzaSyADiOoCpfW_rKBKGVpxgOJzt3cBOs2Oz-A",
+    authDomain: "bipagem-bonus.firebaseapp.com",
+    projectId: "bipagem-bonus",
+    storageBucket: "bipagem-bonus.firebasestorage.app",
+    messagingSenderId: "31556690976",
+    appId: "1:31556690976:web:08478e741d3dc9fd704845"
+  };
+
+  function updateSyncStatus(text, kind){
+    const el = $("sync-status");
+    if (!el) return;
+    el.textContent = text;
+    el.style.color = kind === 'ok' ? 'var(--good)' : (kind === 'warn' ? 'var(--warn)' : 'var(--muted)');
   }
 
-  let history = loadHistory(); // { "2026-09-03": [ {time, marketplace, code}, ... ], ... }
+  let auth = null, db = null, scansCol = null;
+  let authReady = Promise.reject(new Error("Firebase não inicializado"));
+  authReady.catch(()=>{}); // evita warning de promise não tratada antes do primeiro uso real
+
+  try{
+    firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    scansCol = db.collection("scans");
+    authReady = auth.signInAnonymously()
+      .then(cred => cred.user)
+      .catch(err => {
+        console.error("Erro no login anônimo:", err);
+        updateSyncStatus("❌ Falha ao conectar — recarregue a página", "warn");
+        throw err;
+      });
+  } catch(err){
+    console.error("Falha ao inicializar Firebase:", err);
+    updateSyncStatus("❌ Não foi possível conectar ao banco de dados compartilhado", "warn");
+  }
+
+  let history = {}; // { "2026-09-03": [ {id, time, marketplace, code}, ... ], ... } — sincronizado via Firestore em tempo real
+
+  if (scansCol){
+    authReady.then(() => {
+      scansCol.orderBy("ts", "asc").onSnapshot({includeMetadataChanges:true}, (snapshot) => {
+        const newHistory = {};
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          if (!d || !d.date) return;
+          if (!newHistory[d.date]) newHistory[d.date] = [];
+          newHistory[d.date].push({ id: doc.id, time: d.time, marketplace: d.marketplace, code: d.code });
+        });
+        history = newHistory;
+        scans = history[todayDateStr] ? history[todayDateStr].slice() : [];
+        seenCodes = new Set(scans.map(s=>s.code));
+
+        updateSyncStatus(
+          snapshot.metadata.fromCache ? "📴 Sem internet — mostrando última versão sincronizada" : "✅ Sincronizado com todos os aparelhos",
+          snapshot.metadata.fromCache ? "warn" : "ok"
+        );
+
+        refreshStats(); renderLog();
+        if (currentReportsView === "daily") renderDailyReport();
+        if (currentReportsView === "range") renderRangeReport();
+      }, (err) => {
+        console.error("Erro ao sincronizar dados:", err);
+        updateSyncStatus("❌ Erro de sincronização", "warn");
+      });
+    }).catch(()=>{ /* erro já tratado acima */ });
+  }
 
   function pad2(n){ return String(n).padStart(2,'0'); }
   function localDateStr(d){ return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate()); }
@@ -323,14 +382,9 @@
   function fmtBRL(n){ return "R$ " + Number(n||0).toFixed(2).replace(".", ","); }
   function bonusFor(marketplace){ return BONUS[marketplace] || 0; }
 
-  // ---------- today's live scans (backed by history[todayDateStr]) ----------
-  let scans = history[todayDateStr] ? history[todayDateStr].slice() : [];
-  let seenCodes = new Set(scans.map(s=>s.code));
-
-  function persistToday(){
-    history[todayDateStr] = scans;
-    saveHistory(history);
-  }
+  // ---------- today's live scans (derivado de history[todayDateStr], atualizado pelo listener em tempo real acima) ----------
+  let scans = [];
+  let seenCodes = new Set();
 
   // ---------- classify raw QR / typed content as Shopee or Mercado Livre ----------
   function classify(rawCode){
@@ -361,7 +415,7 @@
   }
 
   // ---------- scanning ----------
-  function handleCode(rawCode){
+  async function handleCode(rawCode){
     const parsed = classify(rawCode);
     if (!parsed) return;
     const { marketplace, code } = parsed;
@@ -372,9 +426,22 @@
       return;
     }
 
-    seenCodes.add(code);
-    scans.push({ time, marketplace, code });
-    persistToday();
+    if (!scansCol){
+      showResult("err", "❌ Sem conexão com o banco de dados", "Não foi possível conectar ao banco de dados compartilhado. Recarregue a página e verifique sua internet.");
+      return;
+    }
+
+    seenCodes.add(code); // evita bipagem duplicada em sequência rápida, antes da confirmação do servidor
+
+    try{
+      await authReady;
+      await scansCol.add({ date: todayDateStr, time, marketplace, code, ts: Date.now() });
+    } catch(err){
+      seenCodes.delete(code);
+      console.error("Erro ao salvar bipagem:", err);
+      showResult("err", "❌ Erro ao salvar", "Não foi possível salvar no banco de dados compartilhado. Verifique sua internet e tente novamente.");
+      return;
+    }
 
     if (marketplace === "Desconhecido"){
       showResult("err", "❓ Não identificado", `Código <div class="r-code">${code}</div> não parece Shopee nem Mercado Livre — registrado mesmo assim, confira manualmente.`);
@@ -384,9 +451,7 @@
       if (navigator.vibrate) navigator.vibrate(80);
     }
 
-    refreshStats(); renderLog();
-    if (currentReportsView === "daily" && $("daily-date").value === todayDateStr) renderDailyReport();
-    if (currentReportsView === "range") renderRangeReport();
+    // stats, log e relatórios são atualizados automaticamente pelo listener em tempo real (onSnapshot) assim que o dado chegar
   }
 
   function showResult(kind, title, bodyHtml){
@@ -491,15 +556,19 @@
     });
     body.innerHTML = html;
     body.querySelectorAll(".undo").forEach(el=>{
-      el.addEventListener("click", ()=>{
+      el.addEventListener("click", async ()=>{
         const i = parseInt(el.getAttribute("data-idx"),10);
         const removed = scans[i];
+        if (!removed || !removed.id || !scansCol) return;
         seenCodes.delete(removed.code);
-        scans.splice(i,1);
-        persistToday();
-        refreshStats(); renderLog();
-        if (currentReportsView === "daily" && $("daily-date").value === todayDateStr) renderDailyReport();
-        if (currentReportsView === "range") renderRangeReport();
+        try{
+          await authReady;
+          await scansCol.doc(removed.id).delete();
+        } catch(err){
+          console.error("Erro ao desfazer:", err);
+          alert("Não foi possível desfazer agora. Verifique sua internet e tente novamente.");
+        }
+        // a lista é atualizada automaticamente pelo listener em tempo real (onSnapshot)
       });
     });
   }
